@@ -1,196 +1,113 @@
+
 import React from 'react';
-import { View, Text, FlatList, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useSelectedItems } from '@/hooks/useSelectedItems';
 
 export default function ViewSelectedScreen() {
-  const {
-    selectedItems,
-    updateQuantity,
-    toggleSelectItem,
-    clearSelectedItems,
-  } = useSelectedItems();
+  const router = useRouter();
+  const { selectedItems } = useSelectedItems();
+
+  const selectedProducts = selectedItems.filter(item => item.isSelected);
 
   const renderItem = ({ item, index }: { item: any; index: number }) => {
     return (
-      <View
-        key={item.name}
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 12,
-          borderBottomWidth: 1,
-          borderColor: '#ddd',
-          paddingBottom: 8,
-        }}
-      >
-        <Text style={{ flex: 1, fontSize: 16 }}>
-          {index + 1}. {item.name} {'--->'} 
+      <View style={styles.itemContainer}>
+        <Text style={styles.productName}>
+          - {item.name}
         </Text>
-
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          {/* Minus button */}
-          <TouchableOpacity
-            onPress={() => {
-              const newQty = Math.max(1, item.quantity - 1);
-              updateQuantity(item.name, newQty);
-            }}
-            style={{
-              borderWidth: 1,
-              borderColor: '#999',
-              paddingHorizontal: 10,
-              paddingVertical: 5,
-              borderRadius: 4,
-              marginRight: 8,
-            }}
-          >
-            <Text style={{ fontSize: 18 }}>-</Text>
-          </TouchableOpacity>
-
-          {/* Quantity input */}
-          <TextInput
-            value={String(item.quantity)}
-            keyboardType="numeric"
-            onChangeText={(text) => {
-              // Only allow numbers, no empty or zero
-              let qty = parseInt(text, 10);
-              if (isNaN(qty) || qty < 1) qty = 1;
-              updateQuantity(item.name, qty);
-            }}
-            style={{
-              width: 50,
-              height: 35,
-              borderColor: '#999',
-              borderWidth: 1,
-              textAlign: 'center',
-              fontSize: 16,
-              paddingVertical: 0,
-              marginRight: 8,
-            }}
-          />
-
-          {/* Plus button */}
-          <TouchableOpacity
-            onPress={() => {
-              updateQuantity(item.name, item.quantity + 1);
-            }}
-            style={{
-              borderWidth: 1,
-              borderColor: '#999',
-              paddingHorizontal: 10,
-              paddingVertical: 5,
-              borderRadius: 4,
-            }}
-          >
-            <Text style={{ fontSize: 18 }}>+</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.quantity}>
+          {item.quantity}
+        </Text>
       </View>
     );
   };
 
   return (
-    <View style={{ flex: 1, padding: 16, backgroundColor: 'white' }}>
-      {selectedItems.length === 0 ? (
-        <Text style={{ fontSize: 18, textAlign: 'center', marginTop: 40 }}>
-          No items selected.
-        </Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#007AFF" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Selected Products</Text>
+        <View style={{ width: 24 }} />
+      </View>
+
+      {selectedProducts.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>No items selected.</Text>
+        </View>
       ) : (
-        <>
-          <FlatList
-            data={selectedItems.filter(item => item.isSelected)}
-            keyExtractor={(item) => item.name}
-            renderItem={renderItem}
-            contentContainerStyle={{ paddingBottom: 20 }}
-          />
-          <TouchableOpacity
-            onPress={clearSelectedItems}
-            style={{
-              backgroundColor: '#e74c3c',
-              padding: 12,
-              borderRadius: 6,
-              alignItems: 'center',
-            }}
-          >
-            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>
-              Clear Selected Items
-            </Text>
-          </TouchableOpacity>
-        </>
+        <FlatList
+          data={selectedProducts}
+          keyExtractor={(item) => item.name}
+          renderItem={renderItem}
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+        />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import React from 'react';
-// import { View, Text, FlatList } from 'react-native';
-// import { useSelectedItems } from '@/hooks/useSelectedItems';
-
-// export default function ViewSelectedScreen() {
-//   const { selectedItems } = useSelectedItems();
-
-//   const selected = selectedItems.filter(item => item.isSelected);
-
-//   return (
-//     <View style={{ padding: 16 }}>
-//       <Text style={{ fontSize: 18, marginBottom: 10 }}>Selected Items:</Text>
-//       {selected.length === 0 ? (
-//         <Text>No items selected.</Text>
-//       ) : (
-//         <FlatList
-//           data={selected}
-//           keyExtractor={(item, index) => `${item.name}-${index}`}
-//           renderItem={({ item }) => (
-//             <View style={{ marginBottom: 8 }}>
-//               <Text>{item.name} (Qty: {item.quantity})</Text>
-//             </View>
-//           )}
-//         />
-//       )}
-//     </View>
-//   );
-// }
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    padding: 16,
+  },
+  itemContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'white',
+    padding: 16,
+    marginVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  productName: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+  },
+  quantity: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#007AFF',
+    minWidth: 30,
+    textAlign: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 18,
+    color: '#666',
+  },
+});

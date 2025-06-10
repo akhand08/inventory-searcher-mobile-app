@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
@@ -13,11 +12,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useProducts } from '@/hooks/useProducts';
-import { useSelectedItems } from '@/hooks/useSelectedItems';
-import { Product } from '@/types';
-import AddProductModal from '@/components/AddProductModal';
+import { useProducts } from '../../hooks/useProducts';
+import { useSelectedItems } from '../../hooks/useSelectedItems';
+
 import ProductItem from '@/components/ProductItems';
+import AddProductModal from '@/components/AddProductModal';
+import { Product } from '@/types';
 import { generatePDF } from '@/utils/pdf';
 
 const ITEMS_PER_PAGE = 20;
@@ -26,24 +26,37 @@ export default function HomeScreen() {
   const router = useRouter();
   const { products, loading } = useProducts();
   const selectedItemsHook = useSelectedItems();
-
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
     selectedItemsHook.loadSelectedItems();
   }, []);
 
+  // Filter products based on search query
   const filteredProducts = useMemo(() => {
-    const list = Array.isArray(products) ? products : [];
-    if (!searchQuery.trim()) return list;
-    return list.filter(product =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const lowerQuery = searchQuery.toLowerCase().trim();
+  
+    // If no search query, use all products
+    const all = lowerQuery
+      ? products.filter(product => product.name.toLowerCase().includes(lowerQuery))
+      : products;
+  
+    // Separate selected and unselected products
+    const selectedMap = new Map(
+      selectedItemsHook.selectedItems.map(item => [item.name, item])
     );
-  }, [products, searchQuery]);
+  
+    const selected = all.filter(p => selectedMap.has(p.name));
+    const unselected = all.filter(p => !selectedMap.has(p.name));
+  
+    // Prioritize selected items
+    return [...selected, ...unselected];
+  }, [products, searchQuery, selectedItemsHook.selectedItems]);
 
+  // Paginate filtered products
   const paginatedProducts = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
@@ -67,7 +80,8 @@ export default function HomeScreen() {
   };
 
   const handleView = () => {
-    if (selectedItemsHook.getSelectedCount() === 0) {
+    const selectedCount = selectedItemsHook.getSelectedCount();
+    if (selectedCount === 0) {
       Alert.alert('No Items Selected', 'Please select some items first.');
       return;
     }
@@ -105,11 +119,11 @@ export default function HomeScreen() {
       >
         <Text style={styles.paginationText}>Previous</Text>
       </TouchableOpacity>
-
+      
       <Text style={styles.pageInfo}>
         Page {currentPage} of {totalPages}
       </Text>
-
+      
       <TouchableOpacity
         style={[styles.paginationButton, currentPage === totalPages && styles.disabledButton]}
         onPress={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
@@ -122,27 +136,18 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header with Menu and Search */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.menuButton}
-          onPress={() => setIsDrawerOpen(true)}
-        >
-          <Ionicons name="menu" size={24} color="#333" />
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search products..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSubmitEditing={handleSearch}
+        />
+        <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
+          <Text style={styles.searchButtonText}>Go</Text>
         </TouchableOpacity>
-
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search products..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onSubmitEditing={handleSearch}
-          />
-          <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-            <Text style={styles.searchButtonText}>Go</Text>
-          </TouchableOpacity>
-        </View>
       </View>
 
       {/* Action Buttons */}
@@ -150,13 +155,13 @@ export default function HomeScreen() {
         <TouchableOpacity style={styles.actionButton} onPress={handleClear}>
           <Text style={styles.actionButtonText}>Clear</Text>
         </TouchableOpacity>
-
+        
         <TouchableOpacity style={styles.actionButton} onPress={handleView}>
           <Text style={styles.actionButtonText}>
             View ({selectedItemsHook.getSelectedCount()})
           </Text>
         </TouchableOpacity>
-
+        
         <TouchableOpacity style={styles.actionButton} onPress={handlePDF}>
           <Text style={styles.actionButtonText}>PDF</Text>
         </TouchableOpacity>
@@ -166,43 +171,13 @@ export default function HomeScreen() {
       <FlatList
         data={paginatedProducts}
         renderItem={renderProduct}
-        keyExtractor={(item) => item.name}
+        keyExtractor={(item, index) => `${item.name}-${index}`}
         style={styles.productList}
         showsVerticalScrollIndicator={false}
       />
 
       {/* Pagination */}
       {totalPages > 1 && renderPagination()}
-
-      {/* Drawer Modal */}
-      <Modal
-        visible={isDrawerOpen}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setIsDrawerOpen(false)}
-      >
-        <View style={styles.drawerOverlay}>
-          <View style={styles.drawer}>
-            <View style={styles.drawerHeader}>
-              <Text style={styles.drawerTitle}>Menu</Text>
-              <TouchableOpacity onPress={() => setIsDrawerOpen(false)}>
-                <Ionicons name="close" size={24} color="#333" />
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              style={styles.drawerItem}
-              onPress={() => {
-                setIsDrawerOpen(false);
-                setShowAddModal(true);
-              }}
-            >
-              <Ionicons name="add" size={20} color="#007AFF" />
-              <Text style={styles.drawerItemText}>Add Product</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
 
       {/* Add Product Modal */}
       <AddProductModal
@@ -218,22 +193,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f5f5',
   },
-  header: {
+  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
-  },
-  menuButton: {
-    padding: 8,
-    marginRight: 12,
-  },
-  searchContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   searchInput: {
     flex: 1,
@@ -305,42 +271,6 @@ const styles = StyleSheet.create({
   pageInfo: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#333',
-  },
-  drawerOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-start',
-  },
-  drawer: {
-    backgroundColor: 'white',
-    width: 280,
-    height: '100%',
-    paddingTop: 50,
-  },
-  drawerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  drawerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  drawerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  drawerItemText: {
-    fontSize: 16,
-    marginLeft: 12,
     color: '#333',
   },
 });
