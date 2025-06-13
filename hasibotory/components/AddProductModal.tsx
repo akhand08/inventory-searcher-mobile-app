@@ -19,14 +19,20 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ visible, onClose }) =
   const [productName, setProductName] = useState('');
   const { addProduct } = useProducts();
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!productName.trim()) {
       Alert.alert('Validation', 'Please enter a product name.');
       return;
     }
-    addProduct(productName.trim());  // <-- Pass string here, NOT an object
-    setProductName('');
-    onClose();
+    
+    const success = await addProduct(productName.trim());
+    if (success) {
+      Alert.alert('Success', 'Product added successfully!');
+      setProductName('');
+      onClose();
+    } else {
+      Alert.alert('Error', 'Failed to add product.');
+    }
   };
 
   return (
@@ -36,11 +42,16 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ visible, onClose }) =
           <Text style={styles.title}>Add New Product</Text>
           <TextInput
             style={styles.input}
-            placeholder="Product name"
+            placeholder="Enter product name (max 100 characters)"
             value={productName}
             onChangeText={setProductName}
+            maxLength={100}
+            multiline
             autoFocus
           />
+          <Text style={styles.charCount}>
+            {productName.length}/100 characters
+          </Text>
           <View style={styles.buttons}>
             <TouchableOpacity style={styles.button} onPress={onClose}>
               <Text style={styles.buttonText}>Cancel</Text>
@@ -58,7 +69,7 @@ const AddProductModal: React.FC<AddProductModalProps> = ({ visible, onClose }) =
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     paddingHorizontal: 16,
   },
@@ -68,16 +79,25 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 16,
+    color: '#333',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#ddd',
     borderRadius: 8,
-    paddingHorizontal: 12,
-    height: 40,
+    padding: 16,
+    fontSize: 16,
+    backgroundColor: 'white',
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  charCount: {
+    textAlign: 'right',
+    color: '#666',
+    marginTop: 8,
     marginBottom: 24,
   },
   buttons: {
@@ -85,8 +105,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   button: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     borderRadius: 8,
   },
   addButton: {
@@ -96,6 +116,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#333',
     fontWeight: '600',
+    fontSize: 16,
   },
   addButtonText: {
     color: 'white',

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { SelectedProduct, Product } from '@/types';
 
 interface ProductItemProps {
@@ -26,26 +27,44 @@ const ProductItem: React.FC<ProductItemProps> = ({
     }
   };
 
+  const increaseQuantity = () => {
+    onUpdateQuantity(product.name, quantity + 1);
+  };
+
+  const decreaseQuantity = () => {
+    if (quantity > 1) {
+      onUpdateQuantity(product.name, quantity - 1);
+    }
+  };
+
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        style={[styles.checkbox, isSelected && styles.checkedCheckbox]}
-        onPress={() => onToggleSelect(product.name)}
-      >
-        {isSelected && <Text style={styles.checkmark}>✓</Text>}
-      </TouchableOpacity>
-      
-      <Text style={styles.productName}>{product.name}</Text>
+    <TouchableOpacity 
+      style={[styles.container, isSelected && styles.selectedContainer]}
+      onPress={() => onToggleSelect(product.name)}
+    >
+      <Text style={[styles.productName, isSelected && styles.selectedText]}>
+        {product.name}
+      </Text>
       
       {isSelected && (
-        <TextInput
-          style={styles.quantityInput}
-          keyboardType="numeric"
-          value={quantity.toString()}
-          onChangeText={handleQuantityChange}
-        />
+        <View style={styles.quantityContainer}>
+          <TouchableOpacity style={styles.quantityButton} onPress={decreaseQuantity}>
+            <Ionicons name="remove" size={20} color="#007AFF" />
+          </TouchableOpacity>
+          
+          <TextInput
+            style={styles.quantityInput}
+            keyboardType="numeric"
+            value={quantity.toString()}
+            onChangeText={handleQuantityChange}
+          />
+          
+          <TouchableOpacity style={styles.quantityButton} onPress={increaseQuantity}>
+            <Ionicons name="add" size={20} color="#007AFF" />
+          </TouchableOpacity>
+        </View>
       )}
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -53,40 +72,53 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  checkbox: {
-    width: 24,
-    height: 24,
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginVertical: 4,
+    borderRadius: 8,
+    backgroundColor: 'white',
     borderWidth: 1,
-    borderColor: '#999',
-    borderRadius: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
+    borderColor: '#e0e0e0',
   },
-  checkedCheckbox: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-  },
-  checkmark: {
-    color: 'white',
-    fontWeight: 'bold',
+  selectedContainer: {
+    backgroundColor: '#4CAF50',
+    borderColor: '#4CAF50',
   },
   productName: {
     flex: 1,
     fontSize: 16,
+    color: '#333',
+  },
+  selectedText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  quantityButton: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   quantityInput: {
-    width: 50,
-    height: 32,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
-    paddingHorizontal: 8,
+    width: 60,
+    height: 40,
+    backgroundColor: 'white',
+    borderRadius: 6,
     textAlign: 'center',
+    marginHorizontal: 10,
+    fontSize: 18,
+    fontWeight: '600',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
   },
 });
 
