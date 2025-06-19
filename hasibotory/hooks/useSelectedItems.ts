@@ -7,7 +7,6 @@ const STORAGE_KEY = 'selected_products';
 export function useSelectedItems() {
   const [selectedItems, setSelectedItems] = useState<SelectedProduct[]>([]);
 
-  // ✅ Automatically load from storage on mount
   useEffect(() => {
     loadSelectedItems();
   }, []);
@@ -33,17 +32,26 @@ export function useSelectedItems() {
 
   const toggleSelectItem = (name: string) => {
     setSelectedItems(prev => {
-      const exists = prev.find(item => item.name === name);
-      let newItems;
-      if (exists) {
-        newItems = prev.map(item =>
-          item.name === name
-            ? { ...item, isSelected: !item.isSelected }
-            : item
-        );
+      const index = prev.findIndex(item => item.name === name);
+      let newItems: SelectedProduct[];
+
+      if (index !== -1) {
+        const existingItem = prev[index];
+        const updatedItem = { ...existingItem, isSelected: !existingItem.isSelected };
+
+        // If selected, move to top; otherwise update in place
+        if (updatedItem.isSelected) {
+          newItems = [updatedItem, ...prev.filter(item => item.name !== name)];
+        } else {
+          newItems = prev.map(item =>
+            item.name === name ? updatedItem : item
+          );
+        }
       } else {
-        newItems = [...prev, { name, quantity: 1, isSelected: true }];
+        const newItem = { name, quantity: 1, isSelected: true };
+        newItems = [newItem, ...prev];
       }
+
       saveSelectedItems(newItems);
       return newItems;
     });

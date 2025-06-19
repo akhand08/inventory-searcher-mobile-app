@@ -26,7 +26,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { products, loading } = useProducts();
   const selectedItemsHook = useSelectedItems();
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -38,20 +38,20 @@ export default function HomeScreen() {
   // Filter products based on search query
   const filteredProducts = useMemo(() => {
     const lowerQuery = searchQuery.toLowerCase().trim();
-  
+
     // If no search query, use all products
     const all = lowerQuery
       ? products.filter(product => product.name.toLowerCase().includes(lowerQuery))
       : products;
-  
+
     // Separate selected and unselected products
     const selectedMap = new Map(
-      selectedItemsHook.selectedItems.map(item => [item.name, item])
+      selectedItemsHook.selectedItems.map(item => [item.name, item]),
     );
-  
-    const selected = all.filter(p => selectedMap.has(p.name));
-    const unselected = all.filter(p => !selectedMap.has(p.name));
-  
+
+    const selected = all.filter(p => selectedMap.has(p.name)); 
+    const unselected = all.filter(p => !selectedMap.has(p.name));  
+
     // Prioritize selected items
     return [...selected, ...unselected];
   }, [products, searchQuery, selectedItemsHook.selectedItems]);
@@ -75,7 +75,7 @@ export default function HomeScreen() {
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Clear', style: 'destructive', onPress: selectedItemsHook.clearSelectedItems },
-      ]
+      ],
     );
   };
 
@@ -97,7 +97,7 @@ export default function HomeScreen() {
       await generatePDF(selectedItemsHook.selectedItems);
     } catch (error) {
       Alert.alert('Error', 'Failed to generate or share PDF.');
-      console.error('PDF generation error:', error);
+      console.error('PDF generation error?', error);
     }
   };
 
@@ -115,9 +115,10 @@ export default function HomeScreen() {
       <TouchableOpacity
         style={[styles.paginationButton, currentPage === 1 && styles.disabledButton]}
         onPress={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-        disabled={currentPage === 1}
-      >
-        <Text style={styles.paginationText}>Previous</Text>
+        disabled={currentPage === 1}>
+        <Text style={styles.paginationText}>
+          Previous
+        </Text>
       </TouchableOpacity>
       
       <Text style={styles.pageInfo}>
@@ -127,15 +128,23 @@ export default function HomeScreen() {
       <TouchableOpacity
         style={[styles.paginationButton, currentPage === totalPages && styles.disabledButton]}
         onPress={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-        disabled={currentPage === totalPages}
-      >
-        <Text style={styles.paginationText}>Next</Text>
+        disabled={currentPage === totalPages}>
+        <Text style={styles.paginationText}>
+          Next
+        </Text>
       </TouchableOpacity>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* App Title */}
+      <View style={styles.header}>
+        <Text style={styles.headerText}>
+          HSK MMM
+        </Text>
+      </View>
+
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <TextInput
@@ -146,24 +155,30 @@ export default function HomeScreen() {
           onSubmitEditing={handleSearch}
         />
         <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-          <Text style={styles.searchButtonText}>Go</Text>
+          <Text style={styles.searchButtonText}>
+            Go
+          </Text>
         </TouchableOpacity>
       </View>
 
       {/* Action Buttons */}
       <View style={styles.actionButtons}>
         <TouchableOpacity style={styles.actionButton} onPress={handleClear}>
-          <Text style={styles.actionButtonText}>Clear</Text>
+          <Text style={styles.actionButtonText}>
+            Clear
+          </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.actionButton} onPress={handleView}>
           <Text style={styles.actionButtonText}>
             View ({selectedItemsHook.getSelectedCount()})
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.actionButton} onPress={handlePDF}>
-          <Text style={styles.actionButtonText}>PDF</Text>
+          <Text style={styles.actionButtonText}>
+            PDF
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -188,10 +203,28 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create({  
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  header: {
+    padding: 20,
+    alignItems: 'center',
+    backgroundColor: 'black',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#e0e0e0',
+    letterSpacing: 1,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -205,7 +238,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 40,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#006400',
     borderRadius: 8,
     paddingHorizontal: 12,
     backgroundColor: 'white',
